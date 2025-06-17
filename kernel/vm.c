@@ -487,12 +487,31 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 }
 
 
-#ifdef LAB_PGTBL
-void
-vmprint(pagetable_t pagetable) {
-  // your code here
+//#ifdef LAB_PGTBL
+
+void vmprint_rec(pagetable_t pagetable, int depth, uint64 va_prefix) {
+  for (int i = 0; i < 512; i++) {
+    pte_t pte = pagetable[i];
+    if (pte & PTE_V) {
+      uint64 va = va_prefix | ((uint64)i << (12 + 9 * (2-depth)));
+      for (int d = 0; d < depth+1; d++)
+        printf(" ..");
+      printf("0x%lx: pte 0x%lx pa 0x%lx \n", va, pte, PTE2PA(pte));
+
+      if ((pte & (PTE_R | PTE_W | PTE_X)) == 0) {
+        
+        vmprint_rec((pagetable_t)PTE2PA(pte), depth + 1, va);
+      }
+    }
+  }
 }
-#endif
+
+void vmprint(pagetable_t pagetable) {
+  printf("page table %p\n", pagetable);
+  vmprint_rec(pagetable, 0, 0);
+}
+
+//#endif
 
 
 
